@@ -1,4 +1,4 @@
-# Change log for M365DSC-To-XTA
+# Change log for M365DSC-To-TCM
 
 # 0.0.2
 

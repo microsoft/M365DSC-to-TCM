@@ -28,7 +28,7 @@
 
 }
 
-function Format-XTAProperty
+function Format-TCMProperty
 {
     [CmdletBinding()]
     [OutputType([System.String])]
@@ -91,7 +91,7 @@ function Format-XTAProperty
     return $Property
 }
 
-function Format-XTAProperties
+function Format-TCMProperties
 {
     [CmdletBinding()]
     [OutputType([System.Collections.Hashtable])]
@@ -114,11 +114,11 @@ function Format-XTAProperties
 
         if ($value -is [System.String])
         {
-            $parsedValue = Format-XTAProperty -Property $value -Variables $Variables
+            $parsedValue = Format-TCMProperty -Property $value -Variables $Variables
         }
         elseif ($value -is [System.Collections.Hashtable])
         {
-            $parsedValue = Format-XTAProperties -Resource $value -Variables $Variables
+            $parsedValue = Format-TCMProperties -Resource $value -Variables $Variables
         }
         elseif ($value -is [System.Collections.ArrayList] -or $value -is [System.Array] -or $value -is [System.Collections.Generic.List[System.Object]])
         {
@@ -127,12 +127,12 @@ function Format-XTAProperties
             {
                 if ($item -is [System.String])
                 {
-                    $parsedItem = Format-XTAProperty -Property $item -Variables $Variables
+                    $parsedItem = Format-TCMProperty -Property $item -Variables $Variables
                     $parsedValue += $parsedItem
                 }
                 elseif ($item -is [System.Collections.Hashtable])
                 {
-                    $parsedItem = Format-XTAProperties -Resource $item -Variables $Variables
+                    $parsedItem = Format-TCMProperties -Resource $item -Variables $Variables
                     $parsedValue += $parsedItem
                 }
             }
@@ -144,7 +144,7 @@ function Format-XTAProperties
     return $ParsedResource
 }
 
-function ConvertFrom-DSCToXTA
+function ConvertFrom-M365DSCToTCM
 {
     [CmdletBinding()]
     [OutputType([System.String])]
@@ -177,11 +177,11 @@ function ConvertFrom-DSCToXTA
     $Global:M365DSCSkipDependenciesValidation = $true
 
     # Initialization - Load the Mapping Information
-    $mappingPath = Join-Path -Path $PSScriptRoot -ChildPath 'DSCToXTAMappings.psd1' -Resolve
+    $mappingPath = Join-Path -Path $PSScriptRoot -ChildPath 'M365DSCToTCMMappings.psd1' -Resolve
     $mappings = Import-PowerShellDataFile $mappingPath
 
-    # Initialization - Load the XTA Template
-    $templatePath = Join-Path -Path $PSScriptRoot -ChildPath 'XTATemplate.json' -Resolve
+    # Initialization - Load the TCM Template
+    $templatePath = Join-Path -Path $PSScriptRoot -ChildPath 'TCMTemplate.json' -Resolve
     $templateContent = Get-Content -Path $templatePath -Raw
     $template = ConvertFrom-JSON $templateContent
     
@@ -199,7 +199,7 @@ function ConvertFrom-DSCToXTA
     # Get all the variables used in the DSC configuration
     $variables = Get-DSCVariables -Content $Content
 
-    # Add the variables as parameters to the XTA template
+    # Add the variables as parameters to the TCM template
     foreach ($variable in $variables)
     {
         $variableName = $variable.Substring(1)
@@ -210,7 +210,7 @@ function ConvertFrom-DSCToXTA
         }
     }
 
-    # Loop through all the resources and convert them to XTA
+    # Loop through all the resources and convert them to TCM
     $allResources = @()
     foreach ($resource in $parsedContent)
     {
@@ -233,12 +233,12 @@ function ConvertFrom-DSCToXTA
             {
                 foreach ($Variable in $Variables) {
                     if ($ResourceInstanceName -like "*$Variable*") {
-                        $ResourceInstanceName  = Format-XTAProperty `
+                        $ResourceInstanceName  = Format-TCMProperty `
                         -Property $ResourceInstanceName -Variables $Variable
                         break
                     }
                 }
-                $resource = Format-XTAProperties -Resource $resource -Variables $variables
+                $resource = Format-TCMProperties -Resource $resource -Variables $variables
             }
 
             $currentResource = @{
